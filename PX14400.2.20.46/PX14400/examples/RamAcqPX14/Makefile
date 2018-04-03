@@ -1,0 +1,15 @@
+# Makefile for RamAcqPX14
+
+TARGET   := RamAcqPX14
+
+.PHONY : clean
+
+$(TARGET) : RamAcqPX14.cpp
+	@echo "> Building example: "$(TARGET)"..."
+	@g++ -Wall -g $^ -o $(TARGET) -lsig_px14400
+
+clean :
+	@echo "> Cleaning example: "$(TARGET)"..."
+	@rm -f *~ *.o $(TARGET)
+
+

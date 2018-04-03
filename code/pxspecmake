@@ -1,0 +1,13 @@
+#!/bin/bash
+CFLAGS=`pkg-config gtk+-2.0 --cflags`
+LIBS=`pkg-config gtk+-2.0 --libs`
+#gcc -W -Wall -O3 -lpthread $CFLAGS $LIBS  pxspec.c px14.c amdfft.c disp6.c plot6.c -lacml  -lm -lgfortran -lsig_px14400
+#gcc -W -Wall -O3 -lpthread $CFLAGS $LIBS  pxspec.c px14.c fftwfft.c disp6.c plot6.c -lm -lfftw3 -lsig_px14400
+gcc -W -Wall -O3 -lpthread  pxspec.c px14.c fftwffft.c disp6.c plot6.c -lm -lfftw3f -lsig_px14400 $CFLAGS $LIBS
+#g++ -W -Wall -O3 -lpthread $CFLAGS $LIBS  pxspec.c px14.c fftwffft.c disp6.c plot6.c -lm -lfftw3f -lsig_px14400
+sudo rm pxspec
+mv a.out pxspec
+sudo chown root pxspec
+sudo chmod u+s pxspec
+
+

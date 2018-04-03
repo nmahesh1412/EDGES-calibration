@@ -1,0 +1,30 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]
+then
+    echo "Error: Source file not specified"
+    exit
+fi
+
+if [ ! -f $1 ]
+then
+    echo "Error: File not found"
+    exit
+fi
+
+if [ $# -eq 1 ]
+then
+    FILESIZE=$(stat -c%s "$1")
+    my_samples=`expr $FILESIZE / 2`
+    echo "Detected sample count: " $my_samples
+else
+    my_samples=$2
+fi
+
+echo "Note: You can type 'quit' to quit gnuplot."
+
+GNUFILE=`mktemp`
+echo plot \"$1\" binary array=$my_samples format=\"%uint16\" with lines > $GNUFILE
+gnuplot $GNUFILE -
+rm $GNUFILE
+

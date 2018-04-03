@@ -1,0 +1,37 @@
+-- Using the Doxygen utility
+
+This file describes how to use the Doxygen documentation-generating utility to
+generate reference documentation for the PMP1000 driver module (sig_p8a) and 
+the PMP1000 shared library (libsig_p8a). Doxygen is an extremely nifty 
+application that can scan a project's source files and generate a plethora of
+useful information on the project in a variety of formats. The Doxygen utility
+is freely available for download from www.doxygen.com. (Doxygen may already be
+installed on your machine, depending on your distro and installation 
+selections. If you've got doxy* files in your executable search path, then 
+it's most likely already installed.)
+
+A project's Doxygen settings are stored in a Doxygen project file, typically
+called 'Doxyfile'. This is a text file that contains the various options and
+parameters for documentation generation such as where the source files are
+located, the type of output to generate, and a multitude of other configurable
+parameters that define the output. A Doxyfile can be manually edited if you're
+into that kind of thing, but normal people use the doxywizard utility to 
+configure Doxygen settings. To edit the Doxygen file, open a shell and go to
+the project directory. Then run 'doxywizard ./Doxyfile'. Note that this 
+requires X to be running. I'm not aware of a non-GUI doxywizard but you never
+know. The current project Doxyfiles are configured to generate maximum 
+information and output documentation in HTML format.
+
+To generate documentation, just open a shell and go the project's directory 
+and run 'doxygen ./Doxyfile'. This will result in the Doxygen utility scanning
+your source files and generating the requested information. (Note: You can 
+also generate documentation by running 'make doc' from within the project
+directory.)
+
+To view the documentation, just go to the desired output folder and view the
+generated file. All output is put in the doc/ folder, with each output type
+getting its own folder. (The showDoc script can be used to view the generated
+HTML documentation using the Mozilla browser).
+
+If you'd like to augment or alter the documentation, consult the Doxygen
+website for tutorials and reference on how to tag source comments.

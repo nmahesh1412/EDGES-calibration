@@ -1,0 +1,10 @@
+This application demonstrates how to do a PX14400 RAM-buffered PCI 
+acquisition recording. This type of recording acquires data directly to the
+PCIe bus, using the onboard PX14400 RAM to buffer the data.
+
+By default, data is not saved to disk. To save data to disk, pass a filename
+on the command line.
+
+Pressing 'S' at runtime will have the program copy a snapshot of the current
+recording data to file 'SNAPSHOT.rd16'. The 'sig_plot_16' script can be used
+to plot this data using gnuplot if it's on you system. 

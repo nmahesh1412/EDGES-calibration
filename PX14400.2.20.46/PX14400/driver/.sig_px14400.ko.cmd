@@ -1,0 +1,1 @@
+cmd_/home/loco/Downloads/PX14400.2.20.46/PX14400/driver/sig_px14400.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/loco/Downloads/PX14400.2.20.46/PX14400/driver/sig_px14400.ko /home/loco/Downloads/PX14400.2.20.46/PX14400/driver/sig_px14400.o /home/loco/Downloads/PX14400.2.20.46/PX14400/driver/sig_px14400.mod.o ;  true

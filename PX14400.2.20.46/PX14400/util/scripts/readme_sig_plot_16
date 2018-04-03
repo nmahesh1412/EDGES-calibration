@@ -1,0 +1,13 @@
+The sig_plot_16 is a small script that will plot PX14400 acquisition data
+using the gnuplot utility that is present on many Linux systems.
+
+Usage: sig_plot_16 <FILE>
+Where <FILE> is the pathname of the file to plot.
+
+Running the script will launch gnuplot and tell it to plot the data. Note that
+gnuplot will plot the whole file so if it's a really large file, you may want
+to extract out a smaller piece of the file to view. 
+
+To exit gnuplot, just type 'quit'. This will close the file plot if it is
+still open
+

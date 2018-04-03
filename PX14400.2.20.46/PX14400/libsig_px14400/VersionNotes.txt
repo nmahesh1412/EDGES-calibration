@@ -1,0 +1,778 @@
+PX14400 library version notes
+
+-- Version 2.8 -> 2.20.13
+ - Updates
+ o Sync-ed to Windows library release version 2.20.12.
+ o Implemented firmware upgrade support.
+ 
+-- Version 2.7.1 -> 2.8
+ - Fixes
+ o Corrected a bug in implementation of an internal synchronization object.
+   Should not take 5 seconds to end a recording session any more.
+ - Updates
+ o Implemented support for boot-buffers. Boot buffers are DMA buffers that
+   are allocated by the driver at boot time when it's much easier to get
+   memory for DMA buffers. These functions are documented in the Operator's
+   Manual. New functions:
+    - BootBufGetMaxCountPX14 - Get maximum number of boot buffers available
+    - BootBufCheckOutPX14    - Check out boot buffer
+    - BootBufCheckInPX14     - Check in boot buffer
+    - BootBufQueryPX14       - Query boot buffer info
+    - BootBufCfgSetPX14      - Set the requested boot buffer size
+    - BootBufCfgGetPX14      - Get the requested boot buffer size
+    - BootBufReallocNowPX14  - Ask driver to (re)allocate boot buffers now
+ o New library error codes: SIG_PX14_BUFFER_CHECKED_OUT and
+   SIG_PX14_BUFFER_NOT_ALLOCATED
+ o New flag for PX14S_REC_SESSION_PARAMS::rec_flags member:
+   PX14RECSESF_BOOT_BUFFERS_OKAY. When this bit is set the recording 
+   session will use boot-time DMA buffers if they are available. This flag
+   is only valid for RAM-buffered PCI acquisition recordings. This flag has
+   no effect if the PX14RECSESF_DEEP_BUFFERING flag is specified. When
+   interrogating the boot-time DMA buffers, the library will first try
+   to find a single buffer that it can use for data transfers. Next it
+   will try to find two boot-time DMA buffers. If adequate boot-time 
+   buffers cannot be found then the standard buffering rules apply.
+
+-- Version 2.6.1 -> 2.7 (Released in Windows release 2.7 02/03/2012)
+ - Updates
+ o Updated data transfer code (not recording; transfer only) such that a
+   near maximal board-internal transfer is done instead of just the 
+   requested transfer length. This is so transfers will complete if the
+   firmware is doing some kind of decimation on the data, such as with
+   the Decimation fixed-logic package or custom FPGA logic.
+ o A few Decimation Fixed-Logic Package decimation values are not 
+   currently implemented in the firmware. These selections have been
+   marked as unimplemented in the header file. Affected selections:
+   PX14C2DECF_NONE, PX14C2DECF_2X, PX14C2DECF_4X, and PX14C2DECF_8X
+
+-- Version 2.6 (Released in Windows releae 2.6 11/29/2011)
+ - Fixes
+ o Corrected firmware uploading for devices with new JTAG chain. System 
+   logic version information was not being written into EEPROM
+
+-- Version 2.4.3 -> 2.5 (Released in Windows release 2.5 11/28/2011)
+ - Fixes
+ o Corrected code for patching 32p to 16p XSVF data used for firmware 
+   uploading on devices with new JTAG chain
+ - Updates
+ o Updated SPUD to include support for d2_vr_sel_protect bit. For PX14400D2
+   devices with hardware revision < 2.0, this bit needs to be set to prevent
+   the firmware from driving a shorted pin. (These boards have a hardware
+   and software workaround in place.)
+
+-- Version 2.4.2
+ - Updates
+ o  PX14_RETURN_ON_FAIL modified to return if (res < 0) instead of
+    (res != SIG_SUCCESS).
+ o Added support for new PX14400 (family) board layouts with alternate 
+   sub-revision specific JTAG chain configurations. 
+ o Disabled support for unused XSVF compression in XSVF file player
+ o The workaround implemented in library version 2.3.2 is now conditional on
+   board revision and hardware revision. The workaround is only applied if
+   board revision is PX14400D2 and the hardware revision is < 2.1.
+
+-- Version 2.4.1
+ - Updates
+ o Rebuilt with SRDC manipulation code that doesn't use pthreads
+
+-- Version 2.3.3 -> 2.4 (Released in Windows release 2.4 10/28/2011)
+ - Fixes
+ o When PX14UFWF_SKIP_FW_UPLOAD is being used, "EEPROM erased" bits are
+   updated if necessary.
+ o Updated SRDC data generation to use correct board revision name instead
+   of hard-coded "PX14400".
+ - Updates
+ o Changed the revision name for PX14400 and PX12500 devices to "PX14400A"
+   and "PX12500A" respectively to coincide with device literature.
+ o The PX14GBNF_INC_CHAN_COUPLING flag no longer has effect. Channel 
+   coupling is dictated by board revision.
+ 
+-- Version 2.3.2
+ - Updates
+ o Added a workaround for PCB problem that existed on the first few 
+   PX14400D2 prototype cards where one of the bits of channel 2 input
+   voltage range was not being interpreted correctly. This was worked around
+   by using one of the unused DC offset DAC outputs to drive the bit. 
+
+-- Version 2.3.1
+ - Fixes
+ o Second input voltage range for PX14400D2 cards is 1.6 not 1.8. 
+   Library constant changed (PX14VOLTRNG_D2_1_60_VPP) to reflect this. 
+   Also updated internal voltrange table with correct value.
+
+-- Version 2.2.5 -> 2.3 (Released in Windows release 2.3 10/22/2011)
+ - Fixes
+ o Corrected InitRecordedDataInfoPX14; hi/low gain reported only for
+   PX14400D cards (and not any DC-coupled card).
+ - Updates
+ o The semantics of _WaitForPllLockPX14 have changed. If the function is
+   called and the current ADC clock source is not internal clock then the
+   function will just return SIG_SUCCESS instead of an error
+   (SIG_PX14_UNEXPECTED). Also, once the function determines that a wait is
+   required a 150ms delay applied to give the PLL a chance to stabilize. 
+   This wait has always been applied but called outside of the function.
+ o Added undocumented, internal firmware update flag
+ o Removed internal IsDcCoupled method; we should be comparing against
+   board revision now that we have two types of DC-coupled PX14400 
+   devices
+ o New private library function: _DeferPllLockCheckPX14
+ o For library routines that involve setting a batch of hardware settings
+   the waiting for a PLL lock has been deferred until all operations have
+   completed. This prevents multiple, redundant PLL lock checks from running
+   and so speeds up function execution speed.
+ 
+-- Version 2.2.4
+ - Updates
+ o Updated firmware register bit encodings for PX14400D2 input voltage
+   range selection
+
+-- Version 2.2.3
+ - Updates
+ o Added new library functions: [GS]etPowerDownOverridePX14, 
+   CenterSignalPX14, [GS]etActiveChannelsMaskPX14, 
+   IsActiveChannelMaskSupportedPX14, GetAbsChanIdxFromChanMaskPX14
+ o Added power-down override to board settings persistence data
+ o New library error code: SIG_PX14_OPERATION_FAILED
+
+-- Version 2.2.2
+ - Updates
+ o Added support for DC-offset adjustment for PX14400D2 devices
+ o New library functions: [GS]etFineDcOffsetCh[12]PX14. These functions only
+   have effect on PX14400D2 devices
+ o Added fine DC offset settings to board settings persistence data
+
+-- Version 2.2.1
+ - Fixes
+ o An error is returned if external clock divider value it too large
+ - Updates
+ o New library function: GetBoardProcessingParamPX14
+ o Added new private library function: StallThreadMicroSecsPX14
+ o New library constant: PX14_SAMPLE_MID_VALUE
+ 
+-- Version 2.1.1 -> 2.2 (Released in Windows release 2.2 7/12/2011)
+ - Updates
+ o Added new troubleshooting functions: _[GS]etPllDisablePX14
+   When set, PLL will not be used when the internal clock is selected.
+   **This item is for troubleshooting only.** Disabling the PLL for the 
+   internal clock will result in the acquisition clock drifting over time!
+ o When initializing clock generator components, we no longer do an "update
+   registers" for each register write, instead doing a single "update 
+   registers" at the end. This ensures all registers are updated 
+   atomically and prevents us from writing a particular setting that may 
+   depend on (or affect) another register that we haven't initialized yet
+ o Internal function ReadSampleRamFileFastHaveSink will ensure board is
+   put into standby mode if an asynchronous transfer does not complete.
+
+-- Verion 2.0.1 -> 2.1 (released in Windows release 2.1 6/1/2011)
+ - Updates
+ o Added support for ChannelMask SRDC item. This item is a simple bitmask
+   (1=Ch1,2=Ch2) used to indicate which channels were digitized for the 
+   associated data. The intent is for this new item to replace the ChannelId
+   setting.
+ o Updater master/slave synchronization code for faster rates (>335MHz)
+ o Updated code to use alternate slave clock outputs for newer system
+   firmware versions (> 1.10). 
+
+-- Version 1.17.1 -> 2.0 (released in Windows release 2.0 4/13/2011)
+ - Fixes
+ o Wrapped all pthread condition variable usage into a common class. The
+   class also properly handles spurious wakeups that can occur.
+ o Corrected callback data for firmware updates; file_cur and file_total
+   are now correct. (Technically these are component counts, but each
+   component will likely only ever have a single file.)
+ o Driver register 5 is updated in driver for SPUD operation. (This bug
+   had no effect on hardware.)
+ o Simplified an internal formula used during the setup of the PLL. For some
+   reason, when release build SetInternalAdcClockRatePX14 is called from
+   LabVIEW (with certain bands of frequencies), a component of this formula
+   would be slightly off resulting in the clock rate being about 11kHz
+   slower than requested. Our best guess at this point is that LabVIEW is 
+   running with an alternate floating point model such as speed over 
+   precision. At any rate, a 'divide by .1' was replaced with a 'multiply
+   by 10' and that seems to do the trick.
+ - Updates
+ o New library functions: AllocateDmaBufferChainPX14, 
+   FreeDmaBufferChainPX14, GetUtilityDmaBufferChainPX14
+ o New library error code: SIG_PX14_RESOURCE_ALLOC_FAILURE
+ o Reorganized recording code into a more manageable object oriented design.
+ o Added a new type of RAM-buffered PCIe recording session that uses a DMA 
+   buffer chain to buffer the data instead of the two-buffer approach used
+   by the default PCIe recording. This recording type is selected by setting
+   the PX14RECSESF_DEEP_BUFFERING flag when creating the recording session.
+ o WIN: Updated pthread-win32 library to version 2.9. Previous version had
+   some problems when built for 64-bit Windows.   
+ o WIN: Compiled library against custom builds of dependent third-party 
+   libraries: libxml2, zlib, and pthreads. They are custom in that they're
+   all built with the same C runtime dependency and output DLL names are
+   appended to make them unique. See LibDeps.txt for details
+ 
+-- Version 1.16.2 -> 1.17 (released in Linux release 1.17; 3/22/2011)
+ - Fixes
+ o Replaced a few Windows types with portable equivalents in internal code
+ o Linux DMA buffer mapping code moved into main source
+
+-- Version 1.16.1
+ - Updates
+ o Updated register defaults such that amplifiers are always on
+
+-- Version 1.15.1 -> 1.16 (released in Windows release 1.17; 2/15/2011)
+ - Fixes
+ o Corrected bug in recording session code in which acquisition data is
+   being saved across multiple statically-sized files.
+ o Corrected maximum valid DMA transfer size. Maximum DMA transfer is 
+   4194240 samples (just under 4MiS). 
+
+ - Updates
+ o Default stream used for DumpLibErrorAPX14 and DumpLibErrorWPX14 changed
+   to be stderr instead of stdout.
+ o Adjusted driver current for slave clocks
+ o Added support for boards with no internal clock available. These boards
+   are usually slave boards with internal clock disabled for improved
+   performance. Trying to select the internal clock as the base clock
+   (SetAdcClockSourcePX14(hBrd, PX14CLKSRC_INT_VCO)) will for boards with
+   no internal clock will result in error SIG_PX14_INVALID_OP_FOR_BRD_CONFIG
+
+-- Version 1.14.1 -> 1.15 (released in Windows release 1.16; 1/20/2011)
+ - Updates
+ o New library error code: SIG_PX14_CFG_EEPROM_VALIDATE_ERROR
+ o New library function: ValidateConfigEepromPX14
+ o Added support for a second utility DMA buffer. This is a DMA buffer that
+   is allocated by the library on behalf of the caller for user defined
+   purposes. This buffer is automatically freed when the associated handle
+   is closed.
+ o New library functions: EnsureUtilityDmaBuffer2PX14, 
+   FreeUtilityDmaBuffer2PX14, and GetUtilityDmaBuffer2PX14
+ o New recording session flag: PX14RECSESF_USE_UTILITY_BUFFERS. When this
+   flag is specified the library will use the utility DMA buffers 
+   associated with the device specified when creating the recording 
+   session. If no such buffers exist, they will be allocated. These 
+   buffers will not be freed when the recording session is closed. This
+   gives application code a convenient way to reuse DMA buffers for 
+   subsequent recording sessions.
+ o Changed default transfer size used for recording sessions from 1MiS
+   to 2MiS
+ o As it turns out, master/slave configuration is not 100% software 
+   selectable. In order for a board to be configured as Slave #2, Slave #3,
+   or Slave #4, a particular solder jumper needs to be set on the card.
+   SetMasterSlaveConfigurationPX14 has been updated to validate the setting
+   of Slave 2, 3, or 4 against the state of the solder jumper. If they do
+   not match, the function will return SIG_PX14_INVALID_OP_FOR_BRD_CONFIG.
+ o New library function: GetSlave234TypePX14
+
+-- Version 1.13.1 -> 1.14 (release in Windows release 1.15; 12/1/2010)
+ - Fixes
+ o Corrected bug in SetPowerupDefaultsPX14 in which one of the device
+   registers was not initialized. This bug was introduced in the last
+   release
+
+-- Version 1.12.4 -> 1.13 (released in Windows release 1.14; 9/17/2010)
+ - Updates
+ o Added explicit board revision for PX14400D devices. Up to this point we
+   identified -D devices by the channel coupling information in the EEPROM.
+   Note: PX14400 firmware is incompatible with PX14400D hardware and vice
+   versa.
+ o Commented out undocumented function WriteSampleRamFastPX14; the firmware
+   (or software) is not quite right for this yet. Sometimes missing 
+   interrupts. (WaitForRamWriteCompletionPX14 commented out, too)
+
+-- Version 1.12.3
+ - Updates
+ o Added support for DC-coupled devices
+ o New library functions: [GS]etDcOffsetCh[12]PX14. These functions only
+   have effect on DC-coupled devices, but are safe to call on AC-coupled
+   devices
+
+-- Version 1.12.2
+ - Fixes
+ o When an error occurs in recording session thread, system error 
+   information is propagated to thread that checks recording
+   progress. This should prevent "The operation completed successfully."
+   from appearing in error text.
+ o Corrected error propagation for recording session creation so actual
+   error code is returned instead of SIG_CANCELLED
+
+-- Version 1.12.1 (released in Linux release 1.13; 8/13/2010)
+ - Fixes
+ o Clock generator outputs are synchronized as part of the 
+   SetPowerupDefaultsPX14 implementation
+ o Changed a few internal structure member names to avoid conflict with
+   preprocessor symbol names on Linux platform.
+ - Updates
+ o Added new channel filter enumeration for 225MHz lowpass filter:
+   PX14CHANFILTER_LOWPASS_225MHz
+
+-- Version 1.11.5 -> 1.12
+ - Fixes
+ o Applying PX12500-specific register defaults in SetPowerupDefaultsPX14
+ o No longer doing explicit write to PTS register after DCM reset in
+   SetPowerupDefaultsPX14. The driver does this automatically and always
+   has.
+ o Corrected register mask for pre-trigger samples; field is 13 bits, not 16
+ o Marked CheckFeaturePX14 function for DLL export
+ o The 'EEPROM that should be blank is actually blank' bit is now being 
+   applied to the configuration EEPROM. This bit prevents a particular 
+   EEPROM from being erased when it's already blank during the firmware
+   upload process.
+ o Firmware update routine sets the PX14UFWOUTF_FW_UP_TO_DATE output flag
+   if all firmware is up-to-date. (Used with PX14UFWF_REFRESH_ONLY)
+ - Updates
+ o External clock rate is reset to default rate on SetPowerupDefaultsPX14
+ o Updated DCM selection code for PX12500; different cutoff frequencies for 
+   DCM_SEL and NO_DCM selections
+ o Using cached hardware configuration info for pre firmware update 
+   validation instead of going directly to the EEPROM. This allows us to
+   do validation with virtual devices for internal testing.
+ o Error text output updated to use board revision name instead of hardcoded
+   'PX14400'. 
+
+-- Version 1.11.4
+ - Updates
+ o In order to prevent 32-/64-bit user-mode code confusion, the 64-bit build
+   of the library will be named px14_64.dll. Main header updated to include
+   px14_64.lib for 64-bit code
+
+-- Version 1.11.3
+ - Updates
+ o PX12500: Maximum pre-trigger samples count is 2 bits less than the 
+   PX14400. Code updated to enforce this
+
+-- Version 1.11.2
+ - Updates
+ o Updated code to write the DCM_500 bit of register 5 when necessary
+
+-- Version 1.11.1
+ - Updates
+ o Initial support for fixed-logic parameters
+    - C2: Decimation
+    - C4: FFT
+    - C5: FIR Filtering (Single channel)
+    - C6: FIR Filtering (Dual channel)
+ o Removed WriteSampleRamFastPX14 prototype from main library header until
+   firmware support has been finalized
+ o New library function: GetBoardRevisionPX14
+ o Update register defaults for PX12500 devices. Everything is the same as
+   the PX14400 with the exception that the default acquisition rate is
+   500MHz instead of 400MHz.
+
+-- Version 1.10.6 -> 1.11
+ - Updates
+ o Added support for PX14CHANNEL_TWO active channels selection. Requires
+   system firmware version 1.5.1 or higher
+ o Updated slave synchronization algorithm for master/slave sync
+
+-- Version 1.10.5
+ - Fixes
+ o OpenSrdcFileAPX14 will store given pathname for SRDC file for new files
+ - Updates
+ o Added support for master clock select
+
+-- Version 1.10.4
+ - Updates
+ o Changed the default LVPECL output differential voltage for slave clock
+   outputs
+ o Custom firmware enumerations are now cached in library state
+ o Created a board revision identifier (PX14BRDREV_PX12500) that will be
+   used for PX12500 devices, which are PX14400 devices with an alternate
+   12-bit 500MHz ADC that is pin-for-pin compatible with the standard
+   PX14400 ADC.
+ o Added some initial rudimentary support for PX12500 devices
+ 
+-- Version 1.10.3
+ - Fixes
+ o Removed an extra buffering step when searching for SRDC data when we
+   know we don't need it. This significantly cuts down execution time when
+   considering really large files.
+ - Updates
+ o Added support for larger delay trigger samples. Requires system firmware
+   version 1.3.3 or higher for larger (>262140) delay trigger samples to
+   have effect
+ o Removed PX14LIBF_NEED_DCM_RESYNC library state flag. This flag was 
+   inherited from a previous product and isn't needed by this library.
+
+   
+-- Version 1.10.2
+ - Fixes
+ o WaitForAcquisitionCompletePX14: Board is automatically put into Standby
+   mode when acquisition finishes or is cancelled.
+ o WaitForTransferCompletePX14: Board is automatically put into Standby
+   mode when transfer is cancelled.
+ o Fixed default values for DMA buffer size and transfer length for PX14400
+   recording sessions.
+ o Added new symbolic constant PX14DIGIO_OUT_ADC_CLOCK_DIV_2 intended to 
+   replace PX14DIGIO_OUT_ADC_CLOCK. The old symbol is still valid, newer
+   code will use the newer symbol since it's more appropriate.
+ - Updates
+ o RefreshSrdcParametersPX14 will return a better error when no PX14400
+   device was associated with the associated OpenSrdcFilePX14 call.
+ o Added flags to firmware context file XML parsing so that XML warnings
+   and errors are not dumped to standard output/error.
+ o Added support for new GetVersionTextPX14 flag: PX14VERF_ALLOW_ALIASES
+   When this flag is set the library can return known aliases for certain
+   versions. For example, a firmware package version of 99.0.0.0 is used
+   to identify 'mixed' firmware. Mixed firmware is used to identify devices
+   that have had individual device firmware updates outside of a normal
+   firmware package update.
+ o New library function: GetSabFpgaTypePX14
+ o Optimized remote implementation of SetAdcClockSourcePX14
+ o Optimized remote implementation of SetPowerupDefaultsPX14
+
+-- Version 1.10.1
+ - Fixes
+ o All files now have a newline at the end of the file to avoid compiler
+   warnings
+ o Linux: Added a workaround for kernels that allowed for _IOC_TYPECHECK to
+   be used in user-mode code. (Prevents IO control codes from being used in
+   switch tables.)
+
+-- Version 1.9.5 -> 1.10
+ - Fixes
+ o Board is returned to standby mode if a DMA transfer error occurs in
+   WriteSampleRamFastPX14 or ReadSampleRamFastPX14
+ o IsTransferInProgressPX14 will return non-zero if an asynchronous buffered
+   transfer is in progress. Was only considering fast DMA transfers
+ o Corrected bug in loading hardware settings from UNICODE XML string
+ - Updates
+ o Using __linux__ rather than __GNUC__ to identify Linux platform builds
+ o WINDOWS: Migrated to libxml2 library version 2.7.3 so we can use same 
+   version for 32- and 64-bit platforms.
+ o WINDOWS: Migrated to local build of pthreads library version 2.8 so we
+   can run on 64-bit platforms.
+ o The previous two items are so that we can build a 64-bit build of the
+   library so we can support 64-bit user mode clients.
+
+-- Version 1.9.4
+ - Fixes
+ o Library is now returning specific error (SIG_DMABUFALLOCFAIL) when a DMA
+   buffer allocation fails. Windows code was not properly propagating this
+   error code
+ - Updates
+ o Using cached configuration information instead of EEPROM reads for config
+   query functions (firmware version number, etc)
+ o New library error code: SIG_PX14_INVALIDARG_NULL_POINTER
+ o New library function: InitRecordedDataInfoPX14
+ o Implemented PX14_ENSURE_POINTER and PX14_ENSURE_STRUCT_SIZE macros
+
+-- Version 1.9.3
+ - Fixes
+ o Corrected default permissions for acquisition data output files created
+   on Linux platforms.
+ - Updates
+ o New library function: WaitForRamWriteCompletionPX14
+
+-- Version 1.9.2
+ - Fixes
+ o Waiting for PLLs to lock in SetPowerupDefaultsPX14 before resetting
+   DCMs
+ o Corrected mapping of DMA buffer into user space for Linux systems
+ - Updates
+ o Added a temporary delay after host->board DMA transfer completes
+   to give time for data to be written into RAM.
+
+-- Version 1.9.1
+ - Fixes
+ o !! Undocumented function GetPrevPciFirmwareV e r renamed to 
+   GetPrevPciFirmwareVerPX14
+ o Added definitions for my_malloc and my_free to Linux code
+ o Moved definition of _PX14_IMPLEMENTING_DLL to platform-generic code so
+   we can use it for other platforms
+ o FIX: Replaced a few instances of 'TRUE' and 'FALSE' with library generic
+   equivalent
+ o FIX: Corrected some improper error handling in firmware update file 
+   context parsing.
+ o FIX: Removed some temporary troubleshooting code from WriteDeviceRegPX14
+ - Updates
+ o Adjusted order of class member initializers for various internal classes
+   such that they initialized in order of their declaration in the class.
+ o Replaced internal usage of uint64_t with fully portable unsigned long 
+   long
+ o New library functions for Linux: getch_PX14 and kbhit_PX14 which mimic
+   the console utility functions getch and kbhit.
+ o Internal function _GetSabModePX14 has been commented out until we have a
+   use for it
+ o New library error code: SIG_PX14_TEXT_CONV_ERROR
+ o New library function: DumpLibErrorPX14
+
+-- Version 1.8.2 -> 1.9
+ - Updates
+ o New library functions: [GS]etManualDcmDisablePX14
+ o New library error code: SIG_PX14_NOT_IMPLEMENTED_IN_DRIVER
+ o Added new library function, WriteSampleRamFastPX14. This function has not
+   been verified yet; underlying firmware is still being worked on.
+
+-- Version 1.8.1
+ - Fixes
+ o Corrected SaveSettingsToBufferXmlWPX14 implementation. Bytes/samples
+   confusion was resulting in extra garbage being copied at end of string
+
+-- Version 1.7.2 -> 1.8
+ - Fixes
+ o Corrected the setting of external clock dividers when external clock
+   is selected as clock source; they were each off by one.
+ o Removed calls to xmlCleanupParser in hardware settings persistence.
+   Not really sure why we were calling them to begin with, the function
+   is intended as an libxml2 cleanup routine. It was removed because it
+   was causing runtime errors (access violations) when libxml2 was
+   subsequently used in another thread.
+ - Updates
+ o Main library header now explicitly designates calling convention in 
+   function prototype. The library has always been using cdecl, it's just
+   explicit now. This will prevent stack corruption in the case that any
+   library user default to something else
+ o New library function: GetChannelFilterTypePX14
+ o CopyHardwareSettingsPX14 modified: When destination board is a slave
+   we ensure that ADC clock source is selected as external and that no
+   dividers are applied. Further, if the source board is a master then
+   the slave's external clock rate is set to the master's current actual
+   acquisition rate.
+
+-- Version 1.7.1
+ - Fixes
+ o Now setting device register bit for internal clock reference selection.
+   Previously, we were only setting up the bits in the clock generator part
+ o Calling _OnAcqRateChange when internal clock reference source changes;
+   this will ensure PLL locks to new reference
+
+-- Version 1.6.1 -> 1.7
+ - Fixes
+ o Corrected a spelling error in error text description for  the
+   SIG_PX14_UNKNOWN_JTAG_CHAIN error code.
+ o _OnAcqRateChange is only called for SetExtClockDividersPX14 when the
+   clock source is external
+ o Removed extra write to register 3 (Pretrig samples register) after a DCM
+   reset operation; the driver ensures this is done
+ o Removed explicit call to SyncFirmwareToAdcClockPX14 in 
+   SetOperatingModePX14; the driver ensures this is done
+ o Not checking for PLL lock on slave devices
+ - Updates
+ o Added channel filter constants (PX14CHANFILTER_*) to main header
+ o Added new firmware chunks for SAB SX95T FPGAs
+ o Added virtual JTAG chain configuration for virtual devices
+ o Added PX14_IS_MASTER and PX14_IS_SLAVE macros to main library header
+ o New library error code: SIG_PX14_SLAVE_FAILED_MASTER_SYNC
+ o Implemented master/slave synchronization; current settings are only good
+   for a particular frequency band; final settings will be made when they
+   are known. (_MasterSlaveSync)
+
+-- Version 1.5.1 -> 1.6
+ - Updates
+ o Updated firmware uploading to support devices with shortened JTAG chain
+   (i.e. DR devices with no SAB).
+ o New library error code: SIG_PX14_UNKNOWN_JTAG_CHAIN
+
+-- Version 1.4.1 -> 1.5
+ - !! Code breaking changes
+ o Renamed the static input voltage range constant to 
+   PX14VOLTRNG_STATIC_1_100_VPP; non-amplified channes have 1.1 Vp-p input
+   voltage range, not 2.449 Vp-p
+ - Fixes
+ o Internal code updated to use correct input voltage range for 
+   non-amplified channels.
+ o Corrected issue where channel 2 clock would get lost when switching to
+   dual channel mode
+ - Updates
+ o Added library function: SelectInputVoltRangePX14
+ o Adjusted default DMA buffer size used for recordings. (Now 4MiS)
+
+-- Version 1.3.4 -> 1.4
+ - !! Code breaking changes
+ o Added board_rev and fw_info_flags members to PX14S_HW_CONFIG_EX
+ o Removed (unused) library functions: GetSegmentFullFlagPX14 and 
+   GetTriggerStatusPX14
+ o Function GetPciFirmwareVersionPX14 renamed to GetSysFirmwareVersionPX14
+ - Fixes
+ o Corrected instruction register length for xc5vlx50t part
+ o Corrected initial value for register 6 (unused bit was being set)
+ o SysNetworkConnectTcp is returning SIG_PX14_CONNECTION_REFUSED on socket
+   connection error
+ o CSrdPX14::GetPredefinedParameters is now setting input voltage range 
+   correctly
+ o Added input voltage range selections to XML persistence
+ o Corrected storing of external clock divider values in driver registers
+ o Corrected register layout of a few CG registers; were missing a few bits
+   that resulted in incorrect software representation of registers
+ - Updates
+ o Re-added extra PLL lock checking code to ensure it stays locked after a
+   lock is detected
+ o No longer writing CG_CLK_SEL bits in register 6. Firmware ignoring this
+   field since it can derive state from CS bits in reg 5.
+ o Updated GetBoardNamePX14 implementation to optionally include channel
+   coupling and sub-revision info in name (e.g. "PX14400A SP50")
+ o Removed inherited firmware version dependency for timestamp stuff
+ o Implemented [GS]etTimestampCounterModePX14 and [GS]etTimestampModePX14
+   functions. At the time of this writing, logic behind the bits is not
+   yet implemented
+ o SetStartSamplePX14 will automatically align input down if necessary
+ o No longer assuming FPGA processing enabled since configuration EEPROM 
+   access is working
+ o Added new library function: CheckFeaturePX14
+ o Implemented code to ensure that a particular feature is implemented when
+   it is used (e.g. PX14FEATURE_SAB is set when calling a SAB function).
+ o New library error code: SIG_PX14_INVALID_OP_FOR_BRD_CONFIG
+ o Remote devices tested
+ o Added support for 'No DCM' selection; needs to be selected when ADC clock
+   rate is less than 64 MHz.
+ 
+-- Version 1.3.3
+ - !! Code breaking changes
+ o SetClockDividersPX14 renamed to SetExtClockDividersPX14
+ o [GS]etClockDivider[12]PX14 renamed to [GS]etExtClockDivider[12]PX14
+ - Fixes
+ o Added SetBoardProcessingEnablePX14 to settings persistence and copying
+ o Added SetTimestampCounterModePX14 to settings persistence
+ o Added dcm_reset_cnt member to PX14S_DRIVER_STATS structure (replaced
+   reserved field)
+
+-- Version 1.3.2
+ - Updates
+ o Added some state in configuration EEPROM so that we can skip the erasing
+   of firmware logic EEPROMs if they are already blank. 
+
+-- Version 1.3.1
+ - Fixes
+ o Removed redundant call to GetFifoFullFlagPX14 in 
+   GetPciAcquisitionDataBufPX14. The driver checks FIFO flag on return
+ o NULL encoding allowed for XML input functions; underlying library will
+   detect correctly
+ o Added GetRemoteDeviceCountPX14 macro
+ - Updates
+ o Ported over code for remote devices; hasn't been exhaustively tested yet
+ o WIN: Winsock2.h is included from main header if necessary
+ o Virtual devices will return 0 for EEPROM data reads instead of 0xDA7A
+ o Implemented selection of firmware chunks for firmware upload.
+ o Updated configuration EEPROM image
+ o New library functions: [GS]etBoardProcessingEnablePX14 and
+   SetBoardProcessingParamPX14.
+ o Added all remote PX14400 device functions
+ o New library error code: SIG_PX14_JTAG_IO_ERROR
+   
+-- Version 1.2.1 -> 1.3
+ - !! Code breaking changes
+ o Removed functions: [GS]etAmplifierEnableCh[12]PX14
+ - Fixes
+ o Corrected PX14_DEVICE_REG_COUNT value, was 15 not 16.
+ o Corrected PX14_IS_STATUS_REG macro
+ o Removed a hard-coded 'set internal clock source' setting in SPUD;
+   if register content is goofed up coming in; the call will fail and
+   cause SPUD to fail.
+ - Updates
+ o Added soft reset to clock component in InitializeClockGeneratorPX14
+ o Added a 100ms stall prior to waiting for PLL to lock when changing clock
+   frequency to ensure that the PLL is stable before checking for lock.
+ o New library error code: SIG_PX14_ALIGNMENT_ERROR
+ o New library functions: GetInputVoltRangeFromSettingPX14, 
+   GetInputVoltageRangeVoltsCh1PX14, GetInputVoltageRangeVoltsCh2PX14
+ o Removed channel amplifier enable setting from hardware setting 
+   persistence and copying. The state of this setting is dependent on data
+   in the configuration EEPROM and should not be changed.
+ o Changed default input voltage range (for amplified boards) to 2.2Vp-p
+   range
+   
+-- Version 1.1.3 -> 1.2
+ - !! CODE BREAKING CHANGES !!
+ o Renamed some library functions: 
+   - TempRegWritePX14 ->               RawRegWritePX14
+   - TempRegReadPX14 ->                RawRegReadPX14
+   - ReadSampleRamPX14 ->              ReadSampleRamBufPX14
+   - ReadSampleRamDualChannelPX14 ->   ReadSampleRamDualChannelBufPX14
+   - ReadSampleRamFilePX14 ->          ReadSampleRamFileBufPX14
+   - GetPciAcquisitionDataPX14 ->      GetPciAcquisitionDataFastPX14
+ o Added 'bAsynchronous' parameters to some of the buffered transfer
+   functions.
+ o Removed SetAddressCounterAutoResetOverridePX14 and 
+   GetAddressCounterAutoResetOverridePX14 functions
+ - Fixes
+ o Corrected default value for device register 6 (select clock)
+ o Corrected default register values for clock generator 0x: 10, 11, 14, 15,
+   F2, F3, F4, F5
+ - Updates
+ o New library function: GetPciAcquisitionDataBufPX14, though it's only a
+   stub implementation until the driver gets updated
+ o Sample information changed: Up to this point, it was assumed that 
+   PX14400 data samples would have upper 2 bits zeroed. From this point
+   on, we're assuming it's the lower two bits that are zeroed.
+ o Implemented ResyncClockOutputsPX14. May have some additional work to do
+   for master/slave
+
+-- Version 1.1.2
+ - Fixes
+ o Corrected saving of settings file. Was using older names for digital IO
+   mode and enable. Loading was using correct names
+ o Corrected default register value for trigger levels
+ o Corrected register shift values for: segment size, pre-trigger samples,
+   and trigger delay samples
+ o Corrected RAM starting sample alignment (2K -> 4K)
+ - Updates
+ o Timestamp FIFO is reset in SetPowerupDefaultsPX14 
+ o Upped recording cleanup timeout from 700 ms to 5 seconds. We've now got
+   some post-recording processing taking place.
+ o Some new items are written to SRDC data during data recordings:
+    Element          Type       Interpretation
+    ------------------------------------------------------------------------
+    RecArmTimeStr    String     Date and time of when recording was armed
+    RecArmTimeSec    UINT64     Equivalent to above time, as time_t
+    RecEndTimeStr    String     Date and time of when recording ended
+    RecEndTimeSec    UINT64     Equivalent to above time, as time_t
+ o Raw register IO routines removed from main header. They will be renamed
+   before public release as well
+ o Removed some min/max/align values from main header. These items may be
+   affected by a future firmware update.
+
+-- Version 1.1.1
+ - Fixes
+ o Corrected SetAmplifierEnableCh[12]PX14, bit of interest was flipped
+ - Updates
+ o [GS]etVoltRangeCh[12]PX14 renamed to [GS]etInputVoltRangeCh[12]PX14
+ o [GS]etDigitalOutputModePX14 renamed to [GS]etDigitalIoModePX14
+ o [GS]etDigitalOutputEnablePX14 renamed to [GS]etDigitalIoEnablePX14
+ o Renamed PX14DIGOUT_* to (for the most part) PX14DIGIO_*
+ o Added stubs for new library functions:
+   - SetTimestampCounterModePX14
+   - GetTimestampCounterModePX14
+
+-- Version 1.0.5 -> 1.1
+ - Fixes
+ o Moved _UpdateFwDcmSel into _OnAcqRateChange so DCM selection will be
+   reevaluated on clock change instead of just frequency change.
+
+-- Version 1.0.4
+ - Fixes
+ o Corrected threshold frequency for main firmware DCM selection.
+ - Updates
+ o Temporarily commented out extra PLL lock code added in last version.
+
+-- Version 1.0.3
+ - Updates
+ o Added further safety check in PLL lock check code.
+ o New library error code: SIG_PX14_PLL_LOCK_FAILED_UNSTABLE
+
+-- Version 1.0.2
+ - Fixes
+ o Corrected CG:: PFD polarity; it should be negative
+ - Updates
+ o Added new library functions: .etAmplifierEnableCh.PX14
+ 
+
+-- Version 1.0.1
+ - Fixes
+ o GetPllLockStatusPX14 was not referencing the correct bit.
+ - Updates
+ o Added some new device register bits for clock generator usage
+ o Updated SetAdcClockSourcePX14 to write (R6::CG_CLK_SEL) for clock 
+   generator clock input selection
+
+-- Version 1.0
+ - Updates
+ o Go go go version 1!
+ o Using channel selection bit, and powering ADCs
+ 
+-- Version 0.4.1
+ - Fixes
+ o Corrected PX14_RAM_SIZE_IN_BYTES; it's 512 MiB.
+
+-- Version 0.4.0
+ - Fixes
+ o Corrected DuplicateHandlePX14. Wasn't duplicating underlying system
+   handle correctly
+ - Updates
+ o This file started
+ 

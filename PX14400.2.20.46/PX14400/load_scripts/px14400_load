@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# This is the PX14400 kernel mode driver load script
+
+MOD="sig_px14400"		# Module name
+DEV="sig_px14400"		# Device name
+
+# Figure out where the install put the module(s).
+MODPATH="/lib/modules/`uname -r`/extra/"
+
+# Load the device driver module
+/sbin/insmod $MODPATH$MOD.ko $* || exit 3
+
+# Determine the module's major number.
+major=`cat /proc/devices | awk "\\$2==\"$MOD\" {print \\$1}"`
+
+# Remove old device entries and add new ones for (possibly) new major.
+for i in `seq 0 15`
+do
+  rm -f /dev/$DEV$i
+  mknod /dev/$DEV$i c $major $i
+  chmod ugo+rw /dev/$DEV$i
+done;
+
+
+

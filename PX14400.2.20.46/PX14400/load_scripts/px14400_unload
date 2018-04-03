@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# This is the PMP1000 unload script.
+
+MOD="sig_px14400"		# Module name
+
+# Check permissions
+if [ "$(id -u)" != "0" ] 
+then 
+  echo "You must be root to load or unload kernel modules."
+  exit 1
+fi
+
+# Unload the device driver module.
+/sbin/rmmod $MOD || exit 2
+
+
+

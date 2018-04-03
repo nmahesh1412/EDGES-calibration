@@ -1,0 +1,108 @@
+Signatec PX14400 software support for Linux
+
+This document contains requirements and installation instructions for local
+Signatec PX14400 software support. The `doc' directory contains more
+information relevant to using and developing for the device.
+
+--------------
+Requirements
+
+Signatec recommends systems utilizing Intel based “workstation/server” class
+ chipsets and CPUs for best performance with Signatec products with
+ components such as:
+
+ • Intel Xeon 5400/5500/5600 Series CPUs
+ • Intel 5000P/5000X/5400/5500/5520 Series based Chipsets
+ • 8+ GB of Total System RAM
+ • Motherboards utilizing dedicated (non-shared bus) PCI-X 64-bit slots or
+   PCI-Express (PCIe) x8/x16 slots that match desired Signatec product model
+   board’s interface.
+ • Note, high-end graphics cards are not necessary for Signatec board
+   operation.
+ • For high-speed data storage, high-performance RAID cards with a PCIe based
+   interface that can connect multiple high-performance SATA/SAS hard drives
+   in a RAID level configuration.
+
+Please note that Signatec products are capable of operating with lower end
+ "desktop" class systems as well; they just may not be able to utilize the
+  maximum data transfer performance rates that Signatec products are capable
+  of reaching as these lower end class systems typically use less performance
+  based chipsets and interconnections limiting the bandwidth of the
+  interfaces.
+
+The PX14400 requires the following "minimum" hardware configuration:
+ • The availability of 1 open PCI Express (PCIe) x8 or x16 slot on the system
+   motherboard for PX14400 board installation.
+   o Note: Some motherboards have "mechanical" PCIe x8 or x16 slots that
+     actually operate "electrically" at slower PCIe x4 rates. The PX14400 is
+     capable of being operated in such slots, but its maximum transfer rate
+     will be reduced by the slower PCIe x4 connection.
+ • 4GB of system RAM
+ • Intel Core Series CPU
+
+This driver supports the following Linux distributions: 
+ Red Hat 7.0 	(64-bit)
+ Ubuntu  16.04	(32-bit and 64-bit)
+ 
+------------------------
+Installation and setup
+
+1. Unzip the PX14400 tarball (px14400.X.YY.tar.gz) into its new home.
+   (Where X.YY is the release version.) This can be done by copying the
+   tarball into the directory that you want it installed to and running
+   'tar -xzvf px14400.X.YY.tar.gz' from a console (in that directory).
+
+2. You must be running the kernel on which your PX14400 software will be
+   running.
+
+3. Compile both the driver modules and the libraries by running 'make'
+   from the PX14400 directory.
+
+4. Install the required files by running 'sudo make install'. This will
+   copy and/or register modules and shared libraries.
+
+5. Run 'lsmod|grep sig_' to verify that the kernel mode driver module has
+   been loaded; you should see output similar to
+      sig_px14400             34412  0
+   if it has been loaded successfully. If nothing is shown on the terminal,
+   load the kernel mode driver by running 'sudo modprobe sig_px14400';
+   verify its status using the lsmod-command again. You may want to use
+   the scripts in the load_scripts directory to explicitly load or unload
+   the PX14400 driver in the future.
+
+6. Compile example and/or utility applications by running 'make example'.
+   This will compile all example/utility applications. This step needs to
+   be done after step 4.
+
+--------------------
+Installation Notes
+
+* ATTENTION RED HAT or FEDORA CORE USERS **:
+
+ The PX14400 shared library (libsig_px14400) is installed to /usr/local/lib/.
+ Some Red Hat distributions do not have this directory listed in the library
+ loader's search path. This results in the library not being able to be found
+ by the shared library loader. (Client PX14400 software will fail to build due
+ to linker errors.) To fix this (you will need to be root):
+
+ 1. Add '/usr/local/lib' to the /etc/ld.so.conf file. (Just add it to the
+    bottom of the file.)
+ 2. Run ldconfig. This can be done from any terminal and will not require any
+    further input. (It just applies the change made in the previous step.)
+ 3. The PX14400 library should now be visible to the loader after a 'make
+    install'.
+
+---------------------
+Directory Structure
+
+ driver        - This directory contains the source for the PX14400 driver
+                 module.
+ doc           - This directory contains miscellaneous documentation regarding
+                 PX14400 development and usage as well as release notes.
+ util          - This directory contains example PX14400 utility applications
+                 and scripts.
+ libsig_px14400- This directory contains the source for the PX14400 shared
+                 library.
+ load_scripts  - This directory contains utility scripts. (The driver and
+                 allocator load/unload scripts are located in this directory.)
+ examples      - Sample PX14400 applications.

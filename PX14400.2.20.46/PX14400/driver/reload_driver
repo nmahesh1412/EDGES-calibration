@@ -1,0 +1,8 @@
+#!/bin/sh
+
+echo Unloading PX14400 driver...
+/sbin/rmmod sig_px14400
+echo Loading PX14400 driver...
+/sbin/insmod /lib/modules/`uname -r`/extra/sig_px14400.ko
+echo If you see driver on next line then it is loaded
+/sbin/lsmod | grep sig_px14400

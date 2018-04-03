@@ -1,0 +1,321 @@
+Signatec PX14400 Linux Software Release Notes.
+
+This file contains the details of PX14400 Linux software releases such as new
+and updated features, bug fixes, and known issues. Newer releases are listed
+at the top of the file.
+
+Installation:
+
+1. Unzip the PX14400 tarball (px14400.X.Y.tar.gz) into its new home. 
+   (Where X.YY is the release version.) This can be done by copying the 
+   tarball into the directory that you want it installed to and running 
+   'tar -xzvf px14400.X.Y.tar.gz' from a console (in that directory).
+
+2. Follow directions in the README file.
+
+-- Known issues
+
+ - PX14400 firmware uploading is supported by the main PX14400 user-mode 
+   library and kernel-mode driver, but no user-mode applications exist to do
+   manage the firmware update yet. This will likely be added in a future
+   release. For the time being, a Windows box can be used to upload the 
+   firmware. If this is not feasible, please contact Signatec Tech Support
+   via the Signatec website (www.signatec.com)
+
++------------------------------------+
+ Version 2.20.46 (Released 06/15/2017)
++------------------------------------+
+
+ o Fixed problems of compilation errors with Linux Red Hat 7.0
+   and Ubuntu 16.04
+
++------------------------------------+
+ Version 2.20.34 (Released 10/01/2015)
++------------------------------------+
+
+ - Minor updates
+ o Fixed problems of compilation errors with Linux kernel 3.19.0
+   and Libxml2 2.9.1
+ 
++------------------------------------+
+ Version 2.20.22 (Released 06/09/2014)
++------------------------------------+
+
+ - Updates
+ o Merged with the Windows driver source code v2.20.18
+ o Update the Operator Manuals.
+ o Update the example programs.
+ o Added support for the following kernels:
+     RHEL   6.4     (Kernel 2.6 )  x86_64
+     Ubuntu 12.04.4 (Kernel 3.10)  x86_64
+
+ o Many bug fixes
+ 
+  
++----------------------------------+
+ Version 2.2.1 (Released 8/29/2011)
++----------------------------------+
+
+-- Summary:
+   This release includes an update to the kernel-mode driver so that it will
+   build correctly on kernel version 2.6.36 and higher. This release also 
+   includes the latest user-mode library (2.2.1)
+
+-- PX14400 Software installation (2.2.1)
+ - Updates
+ o Added latest version of the PX14400 Operator's Manual (v1.7)
+ o Updated system requirements section of top-level README
+
+-- PX14400 kernel mode driver (2.2)
+ - Fixes
+ o For kernels that support it, the driver is now using "unlocked_ioctl" 
+   instead of the deprecated "ioctl" This will allow the driver to build on
+   kernel versions 2.6.36 and higher.
+ o Removed __exit section declaration for px14_free_all_devices since we can
+   potentially call it from init code.
+ o Fixed timed acquisition/transfer wait code; driver was incorrectly 
+   calculating wait time by assuming 1 jiffy = 1ms.
+ - Updates
+ o Changed drive current for slave clocks on board with system firmware
+   newer than 1.10.0.0.
+
+-- PX14400 user mode library (2.2.1)
+ - Fixes
+ o Wrapped all pthread condition variable usage into a common class. The
+   class also properly handles spurious wakeups that can occur.
+ o Corrected callback data for firmware updates; file_cur and file_total
+   are now correct. (Technically these are component counts, but each
+   component will likely only ever have a single file.)
+ o Driver register 5 is updated in driver for SPUD operation. (This bug
+   had no effect on hardware.)
+ o Simplified an internal formula used during the setup of the PLL. For some
+   reason, when release build SetInternalAdcClockRatePX14 is called from
+   LabVIEW (with certain bands of frequencies), a component of this formula
+   would be slightly off resulting in the clock rate being about 11kHz
+   slower than requested. Our best guess at this point is that LabVIEW is 
+   running with an alternate floating point model such as speed over 
+   precision. At any rate, a 'divide by .1' was replaced with a 'multiply
+   by 10' and that seems to do the trick.
+ - Updates
+ o New library functions: AllocateDmaBufferChainPX14, 
+   FreeDmaBufferChainPX14, GetUtilityDmaBufferChainPX14
+ o New library error code: SIG_PX14_RESOURCE_ALLOC_FAILURE
+ o Reorganized recording code into a more manageable object oriented design.
+ o Added a new type of RAM-buffered PCIe recording session that uses a DMA 
+   buffer chain to buffer the data instead of the two-buffer approach used
+   by the default PCIe recording. This recording type is selected by setting
+   the PX14RECSESF_DEEP_BUFFERING flag when creating the recording session.
+ o Added support for ChannelMask SRDC item. This item is a simple bitmask
+   (1=Ch1,2=Ch2) used to indicate which channels were digitized for the 
+   associated data. The intent is for this new item to replace the ChannelId
+   setting.
+ o Updater master/slave synchronization code for faster rates (>335MHz)
+ o Updated code to use alternate slave clock outputs for newer system
+   firmware versions (> 1.10). 
+ o Added new troubleshooting functions: _[GS]etPllDisablePX14
+   When set, PLL will not be used when the internal clock is selected.
+   **This item is for troubleshooting only.** Disabling the PLL for the 
+   internal clock will result in the acquisition clock drifting over time!
+ o When initializing clock generator components, we no longer do an "update
+   registers" for each register write, instead doing a single "update 
+   registers" at the end. This ensures all registers are updated 
+   atomically and prevents us from writing a particular setting that may 
+   depend on (or affect) another register that we haven't initialized yet
+ o Internal function ReadSampleRamFileFastHaveSink will ensure board is
+   put into standby mode if an asynchronous transfer does not complete.
+
++----------------------------------+
+ Version 1.17
++----------------------------------+
+
+-- Summary:
+   This release includes a fix to a driver bug that was introduced in the
+   last software pseudo-release (1.13.2) that was distributed to a few users.
+   This bug could result in only half the number of samples being transferred
+   for unbuffered DMA transfer operations. The bulk of the changes in this
+   release were to add support for DC-coupled PX14400 devices (PX14400D). This
+   release brings the Linux code up to date with PX14400 Windows software
+   release 1.17.
+
+-- PX14400 Software Installation (1.17)
+ - Updates
+ o Updated PX14400 Operator's Manual installed in the doc directory
+
+-- PX14400 kernel mode driver (1.15)
+ - Notes
+ o This release brings the Linux kernel mode driver up to date with Windows
+   kernel mode driver version 1.14.2
+ - Fixes
+ ***************************************************************************
+ o Corrected DMA transfer setup code; a bug in the calculation of DMA 
+   transfer size was introduced in driver version 1.9.2. It is possible that
+   this bug would not manifest on systems with certain versions of gcc.
+ ***************************************************************************
+ o Corrected sleep duration for the waiting for SAB DCM reset to complete
+ o Header <asm/current> is now included so that "current" is defined.
+ o Disabled verbose driver output. This output is intended for development
+   and not meant for release code
+ - Updates
+ o Added support for PX14400D devices (DC-coupled PX14400)
+ o DC-offset driver register is now initialized
+ o Updated PX14_IS_SERIAL_DEVICE_REG to consider DAC register as a serial
+   device, which means appropriate delays will be issued to ensure serial
+   stream is delivered.
+ o Added support for new timestamp read troubleshooting/testing flag:
+   PX14TSREAD_IGNORE_FIFO_FLAGS
+ o Added support for boards with no internal clock available. These boards
+   are identified by the PX14FEATURE_NO_INTERNAL_CLOCK feature flag being
+   set.
+ o Amplifiers are defaulted to on and are never turned off. Amplifiers
+   should always be on. Beginning with firmware logic package 1.13 the amp
+   power bits are ignored by the firmware altogether.
+
+-- PX14400 user mode library (1.17)
+ - Fixes
+ o When an error occurs in recording session thread, system error 
+   information is propagated to thread that checks recording
+   progress. This should prevent "The operation completed successfully."
+   from appearing in error text.
+ o Corrected error propagation for recording session creation so actual
+   error code is returned instead of SIG_CANCELLED
+ o Corrected bug in recording session code in which acquisition data is
+   being saved across multiple statically-sized files.
+ o Corrected maximum valid DMA transfer size. Maximum DMA transfer is 
+   4194240 samples (just under 4MiS). 
+ - Updates
+ o Added support for DC-coupled devices
+ o New library functions: [GS]etDcOffsetCh[12]PX14. These functions only
+   have effect on DC-coupled devices, but are safe to call on AC-coupled
+   devices
+ o Added explicit board revision for PX14400D devices. Up to this point we
+   identified -D devices by the channel coupling information in the EEPROM.
+   Note: PX14400 firmware is incompatible with PX14400D hardware and vice
+   versa.
+ o Commented out undocumented function WriteSampleRamFastPX14; the firmware
+   (or software) is not quite right for this yet. Sometimes missing 
+   interrupts. (WaitForRamWriteCompletionPX14 commented out, too)
+ o New library error code: SIG_PX14_CFG_EEPROM_VALIDATE_ERROR
+ o New library function: ValidateConfigEepromPX14
+ o Added support for a second utility DMA buffer. This is a DMA buffer that
+   is allocated by the library on behalf of the caller for user defined
+   purposes. This buffer is automatically freed when the associated handle
+   is closed.
+ o New library functions: EnsureUtilityDmaBuffer2PX14, 
+   FreeUtilityDmaBuffer2PX14, and GetUtilityDmaBuffer2PX14
+ o New recording session flag: PX14RECSESF_USE_UTILITY_BUFFERS. When this
+   flag is specified the library will use the utility DMA buffers 
+   associated with the device specified when creating the recording 
+   session. If no such buffers exist, they will be allocated. These 
+   buffers will not be freed when the recording session is closed. This
+   gives application code a convenient way to reuse DMA buffers for 
+   subsequent recording sessions.
+ o Changed default transfer size used for recording sessions from 1MiS
+   to 2MiS
+ o As it turns out, master/slave configuration is not 100% software 
+   selectable. In order for a board to be configured as Slave #2, Slave #3,
+   or Slave #4, a particular solder jumper needs to be set on the card.
+   SetMasterSlaveConfigurationPX14 has been updated to validate the setting
+   of Slave 2, 3, or 4 against the state of the solder jumper. If they do
+   not match, the function will return SIG_PX14_INVALID_OP_FOR_BRD_CONFIG.
+ o New library function: GetSlave234TypePX14
+ o Default stream used for DumpLibErrorAPX14 and DumpLibErrorWPX14 changed
+   to be stderr instead of stdout.
+ o Adjusted driver current for slave clocks
+ o Added support for boards with no internal clock available. These boards
+   are usually slave boards with internal clock disabled for improved
+   performance. Trying to select the internal clock as the base clock
+   (SetAdcClockSourcePX14(hBrd, PX14CLKSRC_INT_VCO)) will for boards with
+   no internal clock will result in error SIG_PX14_INVALID_OP_FOR_BRD_CONFIG
+ o Updated register defaults such that amplifiers are always on.
+
+-- sig_plot_16 utility
+ - Updates
+ o Usage: sig_plot_16 <SourceFile> <SampleCount>
+   Plots <SampleCount> samples of data from file <SourceFile> using gnuplot
+ o Script checks that a source file is specified and that it exists
+ o If <SampleCount> is omitted it is derived from file size.
+ o gnuplot will plot all points so if you give this a big file it may take
+   a while to plot and not respond quickly.
+
+-- PciAcqPX14 example (v1.2)
+ - Updates
+ o Added data snapshot support. Press 'S' while recording is in progress to
+   have a program dump a snapshot of the current recording data to a file.
+   The code is setup to write 8192 samples to file 'SNAPSHOT.rd16' but these
+   parameters can be easily tweaked by modifying symbolic constants at the
+   top of the source file.
+
++----------------------------------+
+ Version 1.13.2
++----------------------------------+
+
+ -- PX14400 Driver (1.9.3)
+  - Fixes
+  o Added explicit include to <asm/current.h>. This header file is implicitly
+    included on some kernels, but not all.
+  o Disabled verbose driver output to system log.
+
++----------------------------------+
+ Version 1.13.1
++----------------------------------+
+
+ -- PX14400 Driver (1.9.2)
+  - Updates
+  o Updated DMA buffer allocation mechanism to use normal kernel mechanism 
+    for DMA buffer memory allocation. In using this method, the external
+    'allocator' module is no longer necessary, nor is having the kernel
+    disregard memory (i.e. the 'mem=XXXM' kernel parameter is not necessary
+    and will have no effect on DMA buffer allocation). The main disadvantage
+    with this method is that really large DMA buffer allocations are likely
+    to fail. On our development/test system (64-bit system with 4GB of RAM)
+    there was a hard maximum of 2MiS (2097152 samples or 4194304 bytes) per
+    DMA buffer, though we could allocate many 2MiS buffers (>1GB). This 
+    update only affects internal implementation; the same library function is
+    used to allocate a DMA buffer, AllocateDmaBufferPX14.
+   
++----------------------------------+
+ Version 1.13
++----------------------------------+
+
+-- PX14400 Installation (1.13)
+ o Added PX14400 Operator's Manual and FLK User's Guide to the the doc
+   directory.
+
+-- PX14400 user-mode library (1.12.1)
+ o Various bug-fixes and updates; check VersionNotes.txt in libsig_px14400
+   directory.
+ o Added support for PX12500 devices
+
+-- PX14400 driver (1.9.1)
+ o Various bug-fixes and updates; check VerNotes.txt in driver directory
+ o Added support for PX12500 devices
+
++----------------------------------+
+ Version 1.11.1
++----------------------------------+
+
+-- PX14400 Driver (1.8.1)
+ o Removed inclusion of <linux/semaphore.h>; not all kernels have this file.
+   One of the other kernel headers includes the pertinent info already anyway.
+
+-- PX14400 Library (1.10.1)
+ o FIX: Added newlines to all source files that were missing them.
+ o FIX: Added a workaround for clobbering of IO control macros in user-space
+
+-- General
+ o FIX: Updated driver load script to run on newer kernels that do not use the
+   'wheel' group.
+
++----------------------------------+
+ Version 1.11 (First Linux release)
++----------------------------------+
+
+-- General
+
+ - This is the first release of the PX14400 Linux Software. This release
+   includes all kernel- and user-mode code necessary for interfacing with
+   Signatec PX14400 PCIe 14-bit data acquisition devices.
+ - Version numbers for software release, user-mode library, and kernel-mode
+   driver coincide with Microsoft Windows platform equivalents.
+   
+

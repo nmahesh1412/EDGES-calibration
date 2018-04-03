@@ -1,0 +1,23 @@
+The gnuplot utility can be used to plot binary PX14400 data:
+
+In gnuplot:
+
+plot "FileName" binary array=Inf format="%uint16" with lines
+
+- Doing the above will create a plot that plots all samples in the binary 
+  file name FileName. You might want to reduce the number of samples to 
+  something relatively small (a few hundred samples or so).
+
+- Certain version of gnuplot do not support Inf as an array length and must
+  be provided with a concrete length.
+
+- For other information on gnuplot, run 'help' from within gnuplot
+
+--- 
+
+During installation a simple script called sig_plot_16 is installed that
+will plot binary single-channel PX14400 data:
+
+ sig_plot_16 <FileName> <SampleCount>
+
+If <SampleCount> is omitted it will be derived from file size.

@@ -1,0 +1,371 @@
+PX14400 Driver Version Notes
+
+A note on version numbers: The seemingly erratic jumps in driver version
+ numbers are due to the fact that when we update the driver we use the
+ version number of the corresponding equivalent Windows driver. The Windows
+ driver is updated more frequently than the Linux driver, hence the odd
+ jumps in Linux version numbers.
+
+Version 2.20.13 -> 2.20.18.15
+ - Updates
+ o Added Kernel 3.10 support
+ o Sync-ed to Windows version 2.20.18.15
+
+Version 1.17 -> 2.20.13
+ - Updates
+ o Updated driver registration process.
+ o Tested and/or fixes in RHEL 6.4 and Ubuntu 12.04.
+ o Sync-ed to the driver for Windows version 2.20.12.
+
+Version 1.15.1 -> 1.17
+ - Fixes
+ o Updated driver to use preferred ioctl method (unlocked_ioctl) if the 
+   kernel supports it. Beginning with kernel version 2.6.36, the 'ioctl'
+   member of struct file_operations is no longer present.
+ o Removed __exit section declaration for px14_free_all_devices since we can
+   potentially call it from init code.
+ o Fixed timed acquisition/transfer wait code; driver was incorrectly 
+   calculating wait time by assuming 1 jiffy = 1ms.
+ - Updates
+ o Changed drive current for slave clocks on board with system firmware
+   newer than 1.10.0.0.
+
+Version 1.9.4 -> 1.15
+ - Notes
+ o This release brings the Linux kernel mode driver up to date with Windows
+   kernel mode driver version 1.14.2
+ - Fixes
+ o Corrected DMA transfer setup code; a bug in the calculation of DMA 
+   transfer was introduced in driver version 1.9.2.
+ o Corrected sleep duration for the waiting for SAB DCM reset to complete
+ - Updates
+ o Added support for PX14400D devices (DC-coupled PX14400)
+ o DC-offset driver register is now initialized
+ o Updated PX14_IS_SERIAL_DEVICE_REG to consider DAC register as a serial
+   device, which means appropriate delays will be issued to ensure serial
+   stream is delivered.
+ o Added support for new timestamp read troubleshooting/testing flag:
+   PX14TSREAD_IGNORE_FIFO_FLAGS
+ o Added support for boards with no internal clock available. These boards
+   are identified by the PX14FEATURE_NO_INTERNAL_CLOCK feature flag being
+   set.
+ o Amplifiers are defaulted to on and are never turned off. Amplifiers
+   should always be on. Beginning with firmware logic package 1.13 the amp
+   power bits are ignored by the firmware altogether.
+
+
+Version 1.9.3
+ - Fixes
+ o Header <asm/current> is now included so that "current" is defined.
+ o Disabled verbose driver output. This output is intended for development
+   and not meant for release code
+
+Version 1.9.2
+ - Updates
+ o Updated DMA buffer allocation mechanism to use preferred in-kernel
+   memory allocation. There are several advantages to using this method:
+    o It requires no additional setup by the end user
+    o No need for the external allocator module
+    o No need to adjust kernel boot parameters
+    o The kernel can use all system memory
+    o No problems with doing DMA on 64-bit systems
+   The main disadvantage is that really large DMA buffers are not likely
+   to be allocated. It may vary for different kernels/distributions or 
+   amount of physical memory installed in the system, but in our testing,
+   there is a hard maximum DMA buffer size of 2MiS (2097152 samples or 
+   4194304 bytes) for a single DMA buffer. We have found that we can 
+   allocate large amounts of memory for DMA (upwards of 1GB) but the largest
+   single buffer is capped at 2MiS. The update to the DMA buffer mechanism is
+   entirely internal; the same PX14400 API is used. (The only change you may
+   want to make is to remove the "mem=XXXXM" kernel boot parameter so the 
+   kernel makes use of all system memory.)
+
+Version 1.9.1
+ - Fixes
+ o Driver register cache is now correctly initialized
+ o Corrected ReadLogicalClkGenReg_PX14 implementation; cache was not
+   being updated correctly
+ o In the ISR, we're now invalidating handle that started DMA transfer
+ o Not initializing device register 10; this will set a board procesing
+   parameter.
+ - Updates
+ o Cleaned up hardware initialization implementation
+ o Added support for PX12500 devices. Driver really doesn't need to do
+   anything differently to support PX12500 aside from a few different
+   default register values (PX12500 defaults to 500MHz and PX14400
+   defaults to 400MHz).
+ o Changed some internal structure member names (CS,SS) to avoid conflict
+   with Linux preprocessor symbols
+ o Driver is caching custom firmware enumerations
+ o Added support for PX14CHANNEL_TWO active channels selection. Requires
+   system firmware version 1.5.1 or higher
+ o Added an explicit DMA initiator reset when driver loads as part of
+   hardware init
+ o Added an explicit DMA initiator reset whenever we enter Standby mode
+ o Explicitly resetting state to idle when cleaning up in px14_release
+
+Version 1.8.2
+ - Fixes
+ o Corrected bug in px14ioc_device_reg_write where driver register writes
+   would be handled by clock gen reg write code.
+ o Corrected bug where unknown register set index would result in spinlock
+   not being released.
+
+Version 1.8
+ - Fixes
+ o Corrected an issue with interrupt clearing in cases where we could be
+   servicing two actions in one ISR.
+
+Version 1.6.10 -> 1.7
+ - Fixes
+ o Updated DMA code to work around PCIe core's inability to use a 64-bit
+   DMA address when upper 32 bits are zero.
+
+Version 1.6.9[...]
+ - Fixes
+ o PCI transfer operations are no longer being cancelled on a timeout 
+   condition. IPR is resumed with 'cancelled' status but operating mode
+   and state remain. This was intended behavior; allows user to come
+   back and wait again if they want.
+ - Updates
+ o Various builds with tests for 64-bit DMA addresses
+
+Version 1.6.8
+ - Updates
+ o Re-enabled support for 64-bit DMA operations. Want to verify this runs
+   okay on 32-bit systems. In an earlier driver version, we were only
+   qualifying 64-bit DMA address operation with the firmware version and
+   not taking the OS into consideration. This a bad idea and worst and
+   inefficient at best. This new build has support for 64-bit DMA addresses
+   but for 32-bit platforms (!defined(_WIN64)) the DMA operations should
+   be identical to what we've been doing all along.
+
+Version 1.6.7
+ - Fixes
+ o Corrected a bug in DoWaitForCurOp where state could be changed in a 
+   particular error condition.
+ - Updates
+ o Disabled 64-bit DMA address support until it's resolved in the firmware
+ o Operating mode is not a serial register; removed bus flush and stall 
+   after setting operating mode
+ o Updated power-management code; for the time being, we're not allowing
+   sleep mode.
+
+Version 1.6.4 - 1.6.6
+ - Updates
+ o Re-enabled support for 64-bit DMA operations
+ o Implemented newer interrupt clearing mechanism for PC firmware 1.1.2 and
+   higher
+
+Version 1.6.3
+ - Updates
+ o Added some more aliases for returned system error codes
+ o Added support for waiting for a RAM write operation to complete. We've
+   given this a new device state enumeration (PX14STATE_WRAM)
+ o DEVICE_STATE::DeviceState is no longer volatile. It needn't ever have
+   been volatile
+
+Version 1.6.2
+ - Updates
+ o Disabled support for 64-bit DMA address (Dma64BitAddresses) until
+   we actually have firmware to test.
+
+Version 1.6.1
+ - Fixes
+ o Added PX14_FLUSH_BUS_WRITES to a few missing serial accesses
+ - Updates
+ o Rebuilt due to some internal renamed symbol names
+ o Implemented a PX14_FLUSH_BUS_WRITES macro instead of using hardcoded
+   reads
+ o Removed PostDeviceRegWrite. It was only invoked from one spot and running
+   two lines of code, which we're now using inline
+ o Removed a small 10ms delay on PX14MODE_ACQ_RAM -> PX14MODE_STANDBY mode
+   transition. This was used during early development when we were receiving
+   the samples complete interrupt when all samples were acquired, but not 
+   yet written into RAM. The firmware has been adjusted and this stall is
+   not necessary. (The firmware update happened before our public release
+   so we're not worried about breaking anything.)
+ o Added support for 64-bit DMA addresses. This requires PCI firmware 
+   version 1.1.1 or higher. The actual registers that we use are unused by
+   older firmware so we're always writing 64 bits of address. We restrict
+   64-bit addresses by qualifying DEVICE_DESCRIPTION::Dma64BitAddresses
+   with current PCI firmware version.
+ o Moved hardware configuration refresh to before DMA context init so we
+   know if we can use 64-bit DMA buffer addresses
+ o Moved initialization of assumed RAM size into DoHwCfgRefreshWork
+  
+Version 1.5.2 -> 1.6
+ - Updates
+ o Added initial support for host->device DMA transfers. (Single, flat DMA
+   transfer supported; driver-buffered stuff isn't yet.)
+
+Version 1.5.1
+ - Fixes
+ o Device state is held idle when starting a PCI buffered acquisition, since
+   DMA transfers will be requested soon.
+
+Version 1.4.1 -> 1.5
+ - Updates
+ o Driver is now aware of 'NO_DCM' bit and doesn't try to wait for DCM lock
+   when set.
+
+Version 1.3.3 -> 1.4
+ - Fixes
+ o Driver now returns correct error code for a timed-out DCM reset operation
+
+Version 1.3.1 - 1.3.2
+ - Fixes
+ o Corrected reading of config EEPROM DIN bit; was causing EEPROM write 
+   timeouts
+ o Updated config register reads (BAR3) to include an extra read before we
+   keep the data
+ - Updates
+ o Moved previously loose EEPROM and JTAG access structures into same format
+   used by device registers.
+ o Added a software reset of clock generator component in InitClockGenerator
+ o Driver is now caching mode hardware config info from EEPROM
+ o Removed IOCTL_PX14_DMA_RST, not needed for this device
+ o Unlocked EEPROM access code; still not pulling config info during driver
+   load yet though.
+ o Added support for PX14S_DRIVER_STATS::dcm_reset_cnt
+ o Added support for surprise removal. It's unlikely that we'll ever need to
+   handle this situation though.
+
+Version 1.2.1 -> 1.3
+ - Fixes
+ o Corrected PX14_DEVICE_REG_COUNT value, was 15 not 16.
+ o Corrected PX14_IS_STATUS_REG macro
+ - Updates
+ o CG output clocks synchronized during hardware initialization
+
+Version 1.1.4.0, 1.1.5.0 -> 1.2
+ - Fixes
+ o Rebuilt with correct number of bits for starting address
+ o Correct assumed RAM size
+ o Corrected RAM starting sample alignment (2K -> 4K)
+ o Corrected StartNextBtReadSeg_PX14 to align DMA size up to frame boundary
+ o Corrected default value for device register 6 (select clock)
+ o Corrected default register values for clock generator 0x: 10, 11, 14, 15,
+   F2, F3, F4, F5
+ - Updates
+ o Current operating mode is validated when starting a DMA transfer
+ o Driver is now consulting the FIFO full flag for DMA operations during
+   PCIBUF recordings
+
+Version 1.1.3.0
+ - Fixes
+ o Corrected memory probe for channel 2 data when writing to device, which
+   is not yet supported in firmware.
+
+Version 1.1.2.0
+ - Fixes
+ o Corrected a small bug in driver-buffered read when we're deinterleaving
+   data and we're throwing away channel 1 data.
+ - Updates
+ o TEMP: Doing a 10ms sleep on RAMACQ->Standby mode change.
+ 
+Version 1.1.1.0
+ - Updates
+ o Updated ISR for new interrupt handling; rather than a having interrupt
+   and status clear when we read the status register, it's now a two step
+   process. If a status flag is set (i.e. it's our interrupt) then we do
+   a write to a new register to clear the interrupt and status.
+
+Version 1.0.9.0 -> 1.1
+ - Fixes
+ o Corrected bug in driver-buffered reads; we were asking for half of what
+   we needed in the DMA transfer (using sample count instead of byte count)
+
+Version 1.0.8.0
+ - Updates
+ o Added PX14_DMA_TLP_BYTES to px14_private instead of using local constant
+   static. This should be added to main library header in some form so we
+   can have correct library constants for min/max/align DMA sizes
+ o Issuing a DMA logic prior to start of an acquisition (or SAB xfer). 
+   Firmware needs this so interrupt logic gets reset correctly.
+
+Version 1.0.7.0
+ - Updates
+ o No net changes
+ 
+Version 1.0.6.0
+ - Fixes
+ o Corrected DCM reset operation; an incorrect bit mask was being used when
+   doing the DCM reset pulse.
+
+Version 1.0.5.0
+ - Fixes
+ o Corrected the 'register update' code used for updating clock gen
+   registers; we were using old value from other part.
+ o Corrected a default CG register value: CG reg 192 = 0x02
+ o Corrected default state for device register 5::CG_SYNC_
+
+Version 1.0.4.0
+ - Updates
+ o Calling InitializeHardwareSettingsPX14 in start device IRP
+
+Version 1.0.3.0
+ - Updates
+ o Added more bits for serial register access address
+
+Version 1.0.2.0
+ - Updates
+ o Rebuilt with new device register bits and defaults
+
+Version 1.0.1.0
+ - Fixes
+ o Commented out automatic power down of channel amplifiers. The intention
+   was to power them down when entering Off mode, but we were actually 
+   doing it on any acquisition->standby mode transition. For now, we're
+   never powering down the channels until things are up and running.
+   
+Version 1.0.0.0
+ - Updates
+ o Using actual ReadDevReg macro now instead of software register read
+ o Replaced old UINT-array with PX14U_DEVICE_REGISTER_SET for device 
+   register cache
+ o Updated SetActiveMemoryRegion_PX14 to include a non-zero bust count
+   for free run selection; firmware needs a non-zero value
+ o Using actual DoDcmResetWork code
+ o Updated InitializeHardwareSettingsPX14: 
+    - Now initializing clock part after device registers setup
+    - Remove old DAC setup code left over from prototype PDASixteens
+    - Removed ResetBoardRamDcms, not used for this board
+    - Removed extraneous write to register 3; DoDcmResetWork does it
+    - Commented out clock resynchs until I know that we need them
+ o We're now using PowerUpChannel again to power down when acquisition
+   completes, however, we're NOT powering down the ADCs yet since doing
+   so will require us to reset DCMs when they're powered back up. (i.e.
+   we'd need to reset DCMs for each acquisition)
+ o Added a stub IRP_MJ_CLOSE implementation; real work is done in the
+   IRP_MJ_CLEANUP handler, but we still need to handle close request
+ o Finalized INF file
+
+Version 0.0.8.0
+ - Fixes
+ o Corrected state cleanup code in DoDcmResetWork. This has no effect yet
+   though because we're commenting out DCM resets until firmware is ready
+   for it
+
+Version 0.0.7.0
+ - Updates
+ o Updated driver to use correct starting sample and total samples values in
+   device registers
+
+Version 0.0.6.0
+ - Updates
+ o Stubbed out all register IO macros to virtual except for DMA registers.
+   There are some extra accesses coming in and apparently clobbering the
+   DMA logic before we get a chance to start. This is likely due to some
+   normal accesses, but are bad because everything is mapped to BAR0
+
+Version 0.0.5.0
+ - Updates
+ o Added DMA transfer code; in doing so a few things have been commented out.
+   Check for DMA_WORK comments.
+
+Version 0.0.3.0 - 0.0.4.0
+ - Updates
+ o This file started
+ o Converted all register IO from port space access to memory space access
+   since this is what we'll be using
